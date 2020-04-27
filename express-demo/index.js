@@ -1,95 +1,49 @@
-const Joi = require('joi');
+const startup_debbuger = require('debug')('app.startup');
+const db_debbuger = require('debug')('app.db');
+const config = require('config');
+const log = require('./middleware/logging');
+const auth = require('./middleware/authentication');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const courses = require('./routes/courses');
+const home = require('./routes/home');
 const express = require('express');
 const app = express();
- 
-app.use(express.json());
 
-const courses = [
-    {id : 1, name: 'Course1'},
-    {id : 2, name: 'Course2'},
-    {id : 3, name: 'Course3'}
-];
+app.set('view engine', 'pug');
+app.set('views', './views');
+
+/* console.log(`this process = ${process.env.NODE_ENV}`);
+console.log(`app = ${app.get('env')}`); */
+
+app.use(helmet()); 
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
+app.use(express.static('public'));
+app.use('/api/courses', courses);
+app.use('/', home);
+
+
+console.log('Application Name : ' + config.get('name'));
+console.log('MailServer Name : ' + config.get('mail.host'));  
+
+if(app.get('env') === 'development'){
+    app.use(morgan('tiny'));
+    startup_debbuger('Morgan enabled....');
+}
+
+//DB Check
+db_debbuger('Database connected');
+
+app.use(log);
+ 
+app.use(auth);
+
+
 
 const port = process.env.PORT || 3000;
 
-app.get('/', (req, res)=>{
-    res.send('Helllo World');
-});
 
-//GET
-app.get('/api/courses', (req,res)=>{
-    res.send(courses);
-});
-
-//GET with ID
-app.get('/api/courses/:id', (req,res)=>{
-    const course = courses.find(c=>c.id===parseInt(req.params.id));
-    if(!course) return res.status(404).send(`The course with ${req.params.id} doesnt exist` );
-    //res.send(`This is the requested ${course}`);
-    res.send(course);
-});
-
-//GET PARAMETER
-app.get('/api/posts/:month/:year', (req,res) =>{
-    res.send(req.params);
-    //res.send(req.query);
-});
-
-//POST
-
-app.post('/api/courses', (req,res)=>{
-    const {error} = validateCourse(req.body);
-
-    if(error){
-        res.status(400).send(error.details[0].message);
-        return;
-    }
-
-    const course = {
-        id : courses.length + 1,
-        name : req.body.name
-    };
-
-    courses.push(course);
-    res.send(courses);  
-
-});
-
-//DELETE
-app.delete('/api/courses/:id',(req,res)=>{
-    const course = courses.find(c=>c.id===parseInt(req.params.id));
-    if(!course) return res.status(404).send(`The course with ${req.params.id} doesnt exist` );
-
-    const index = courses.indexOf(course);
-    courses.splice(index,1);
-
-    res.send(courses);
-});
-
-//PUT
-app.put('/api/courses/:id',(req,res)=>{
-    const course = courses.find(c=>c.id===parseInt(req.params.id));
-    if(!course) return res.status(404).send(`The course with ${req.params.id} doesnt exist` );
-
-    const {error} = validateCourse(req.body);
-
-    if(error){
-        res.status(400).send(error.details[0].message);
-        return;
-    }
-
-    course.name = req.body.name;
-    res.send(course);
-});
-
-function validateCourse(course){
-   
-    const schema = {
-        name: Joi.string().min(3).required()
-    };
-
-    return Joi.validate(course,schema);
-}
 
 
 
