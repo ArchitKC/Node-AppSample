@@ -9,6 +9,7 @@ const courses = [
     {id : 3, name: 'Course3'}
 ];
 
+
 //GET
 router.get('/', (req,res)=>{
     
