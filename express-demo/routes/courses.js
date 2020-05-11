@@ -11,6 +11,8 @@ const courses = [
 
 //GET
 router.get('/', (req,res)=>{
+    
+    //res.render('index',{title: "My Course Page", message: "Courses Details"});
     res.send(courses);
 });
 

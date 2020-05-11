@@ -40,11 +40,6 @@ app.use(log);
 app.use(auth);
 
 
-
 const port = process.env.PORT || 3000;
-
-
-
-
 
 app.listen(port, ()=> {console.log(`Lisening to Port ${port}....`)});
